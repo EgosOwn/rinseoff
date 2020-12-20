@@ -24,8 +24,10 @@ namespace rinseoffcli
             stderrStream.Flush();
         }
         static void loadData(string filepath, string keypath){
+            // Load in an encrypted file and use a key file to decrypt it, then log bytes back to stdout
             byte[] plaintext = {};
             byte[] readBytes(string file){
+                // Read bytes in from a file, exit with error message if not possible
                 byte[] bytesToRead = {};
                 try{
                     bytesToRead = File.ReadAllBytes(file);
@@ -46,6 +48,7 @@ namespace rinseoffcli
             }
             var stdout = Console.OpenStandardOutput();
             try{
+                // Decrypt a file using a key file
                 plaintext = RinseOff.decrypt_secret_bytes(
                     readBytes(filepath),
                     readBytes(keypath)
@@ -59,6 +62,7 @@ namespace rinseoffcli
                 stderrWrite("Could not decrypt " + filepath + " with " + keypath);
                 Environment.Exit(12);
             }
+            // print the plaintext and exit
             foreach(byte b in plaintext){
                 stdout.WriteByte(b);
             }
