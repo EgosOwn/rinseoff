@@ -20,6 +20,15 @@ namespace rinseoff
             return combined.ToArray();
         }
 
-        
+        public static byte[] decrypt_secret_bytes(byte[] ciphertext, byte[] key){
+            var ciphertextList = new List<byte>();
+            ciphertextList.AddRange(ciphertext);
+            return Sodium.SecretBox.Open(
+                ciphertextList.GetRange(24, ciphertextList.Count - 24).ToArray(),
+                ciphertextList.GetRange(0, 24).ToArray(),
+                key);
+        }
+
+
     }
 }
