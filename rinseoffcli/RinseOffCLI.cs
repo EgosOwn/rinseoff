@@ -1,21 +1,37 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using System.Collections.Generic;
 using rinseoff;
 namespace rinseoffcli
 {
     class Program
     {
+        public static string version = "0.0.0";
+        enum ErrorCode : byte
+        {
+            InvaildArgs = 1,
+            NoDataFileFound,
+            NoPermissionToReadDataFile,
+            FailedToReadDataFile,
+            FailedToWriteDataFile,
+            InvalidKeyFileSize,
+            InvalidKeyFile,
+            KeyFileNotFound,
+            NoPermissionToWriteKeyFile,
+            FailedToReadKeyFile,
+            FailedToWriteKeyFile
+        }
 
-        static void showHelp(int exitCode = 1){
+
+        static void showHelp(ErrorCode exitCode = ErrorCode.InvaildArgs){
+            Console.WriteLine("RinseOff " + version + " High level secure-erasure utility");
             Console.WriteLine("Must specify keygen <key path> or store/load, then a file name followed by a key file.\nFormat: <verb> <data file> <key file>");
-            Environment.Exit(exitCode);
+            Environment.Exit((int) exitCode);
         }
         static void validateArgCount(string[] args, int count){
             if (args.Length != count){
                 stderrWrite("Invalid number of arguments");
-                showHelp(2);
+                showHelp(ErrorCode.InvaildArgs);
             }
         }
         static void stderrWrite(string msg){
@@ -34,15 +50,15 @@ namespace rinseoffcli
                 }
                 catch(FileNotFoundException){
                     stderrWrite(file + " is not found");
-                    Environment.Exit(9);
+                    Environment.Exit((int)ErrorCode.NoDataFileFound);
                 }
                 catch(UnauthorizedAccessException){
                     stderrWrite("No permssion to read " + file);
-                    Environment.Exit(10);
+                    Environment.Exit((int)ErrorCode.NoPermissionToReadDataFile);
                 }
                 catch(IOException){
                     stderrWrite("Failed to read " + file);
-                    Environment.Exit(11);
+                    Environment.Exit((int)ErrorCode.FailedToReadDataFile);
                 }
                 return bytesToRead;
             }
@@ -56,11 +72,11 @@ namespace rinseoffcli
             }
             catch(Sodium.Exceptions.KeyOutOfRangeException){
                 stderrWrite("Keyfile is not appropriate size for key");
-                Environment.Exit(4);
+                Environment.Exit((int)ErrorCode.InvalidKeyFileSize);
             }
             catch(System.Security.Cryptography.CryptographicException){
                 stderrWrite("Could not decrypt " + filepath + " with " + keypath);
-                Environment.Exit(12);
+                Environment.Exit((int)ErrorCode.InvalidKeyFile);
             }
             // print the plaintext and exit
             foreach(byte b in plaintext){
@@ -93,15 +109,15 @@ namespace rinseoffcli
             }
             catch(FileNotFoundException){
                 stderrWrite("Key file " + keypath + " does not exist");
-                Environment.Exit(3);
+                Environment.Exit((int)ErrorCode.KeyFileNotFound);
             }
             catch(Sodium.Exceptions.KeyOutOfRangeException){
                 stderrWrite("Keyfile is not appropriate size for key");
-                Environment.Exit(4);
+                Environment.Exit((int)ErrorCode.InvalidKeyFileSize);
             }
             catch(IOException){
                 stderrWrite("Failed to read key file " + keypath);
-                Environment.Exit(5);
+                Environment.Exit((int)ErrorCode.FailedToReadKeyFile);
             }
             try{
                 File.WriteAllBytes(filepath, encryptedInput);
@@ -112,11 +128,11 @@ namespace rinseoffcli
             }
             catch(DirectoryNotFoundException){
                 stderrWrite("Output path " + filepath + " not found");
-                Environment.Exit(7);
+                Environment.Exit((int)ErrorCode.NoDataFileFound);
             }
             catch(IOException){
                 stderrWrite("Could not write to " + filepath);
-                Environment.Exit(8);
+                Environment.Exit((int)ErrorCode.FailedToWriteDataFile);
             }
         }
         static void Main(string[] args)
@@ -133,15 +149,15 @@ namespace rinseoffcli
                     }
                     catch(UnauthorizedAccessException){
                         stderrWrite("Cannot write to key file due to lack of perms " + args[1]);
-                        Environment.Exit(6);
+                        Environment.Exit((int)ErrorCode.NoPermissionToWriteKeyFile);
                     }
                     catch(DirectoryNotFoundException){
                         stderrWrite("Path not found " + args[1]);
-                        Environment.Exit(6);
+                        Environment.Exit((int)ErrorCode.KeyFileNotFound);
                     }
                     catch(IOException){
-                        stderrWrite("Path not found " + args[1]);
-                        Environment.Exit(6);
+                        stderrWrite("Error writing keyfile " + args[1]);
+                        Environment.Exit((int)ErrorCode.FailedToWriteKeyFile);
                     }
                 break;
                 case "store":
