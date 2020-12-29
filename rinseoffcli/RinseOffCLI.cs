@@ -24,7 +24,7 @@ namespace rinseoffcli
 {
     class Program
     {
-        public static string version = "0.0.0";
+        public static string version = "1.0.0";
         enum ErrorCode : byte
         {
             // Exit error codes indexed from 1
@@ -44,6 +44,7 @@ namespace rinseoffcli
 
         static void showHelp(ErrorCode exitCode = ErrorCode.InvaildArgs){
             Console.WriteLine("RinseOff " + version + " High level secure-erasure utility");
+            Console.WriteLine("For stdout output, specify 'stdout' as the data file for the store command");
             Console.WriteLine("Must specify keygen <key path> or store/load, then a file name followed by a key file.\nFormat: <verb> <data file> <key file>");
             Environment.Exit((int) exitCode);
         }
@@ -107,6 +108,14 @@ namespace rinseoffcli
         static void storeData(string filepath, string keypath){
             byte[] encryptedInput = new byte[0];
 
+            void writeStdoutBytes(byte[] data){
+                var stdout = Console.OpenStandardOutput();
+                foreach (byte b in data){
+                    stdout.WriteByte(b);
+                }
+                stdout.Flush();
+            }
+
             byte[] readUntilClose(){
                 // Read binary from STDIN until close
                 var readData = new List<byte>();
@@ -137,6 +146,10 @@ namespace rinseoffcli
             catch(IOException){
                 stderrWrite("Failed to read key file " + keypath);
                 Environment.Exit((int)ErrorCode.FailedToReadKeyFile);
+            }
+            if (filepath == "stdout"){
+                writeStdoutBytes(encryptedInput);
+                return;
             }
             try{
                 File.WriteAllBytes(filepath, encryptedInput);
