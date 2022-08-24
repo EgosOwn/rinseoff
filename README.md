@@ -6,7 +6,7 @@ The name doesn't make a lot of sense, but it means you can "rinse" your data off
 
 It is mainly intended for scripts/apps to use. In the future I may make a FUSE wrapper so users can drop files into it.
 
-Internally it uses libsodium's secretbox and stores a unique nonce alongside the 32 byte key.
+Internally it uses libsodium's secretbox and stores a unique nonce alongside the 32 byte key. The key is meant to be stored on a volatile or rotational disk.
 
 # Build
 
